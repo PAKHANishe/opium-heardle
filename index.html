@@ -5,17 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OPIUM HEARDLE</title>
     <style>
-        :root {
-            --bg-color: #050505;
-            --card-bg: rgba(12, 12, 12, 0.95);
-            --border-color: #1c1c1c;
-            --accent-color: #e91429;
-            --text-main: #ffffff;
-            --text-muted: #666666;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
         }
 
-    body {
-            /* ВОЗВРАЩАЕМ СТРОГИЙ ЧЕРНЫЙ ФОН */
+        body {
+            /* КАРТИНКА НА ФОН */
+            background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), url('background.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             background-color: #050505;
             
             color: #ffffff;
@@ -25,372 +27,376 @@
             min-height: 100vh;
             overflow-x: hidden;
         }
-            
-            color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
 
+        /* ОСНОВНОЙ КОНТЕЙНЕР ДЛЯ ИГРЫ */
         .game-wrapper {
-            background-color: var(--card-bg);
-            padding: 40px;
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
-            width: 90%;
-            max-width: 440px;
-            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.9);
-        }
-
-        header h1 {
-            font-size: 26px;
-            font-weight: 900;
-            letter-spacing: 5px;
-            margin: 0 0 5px 0;
-            text-align: center;
-        }
-
-        header .tags {
-            font-size: 10px;
-            color: var(--text-muted);
-            text-align: center;
-            margin-bottom: 30px;
-            letter-spacing: 2px;
-        }
-
-        /* Таймлайн */
-        .timeline {
-            height: 6px;
-            background-color: #111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            z-index: 2;
+        }
+
+        /* ИГРОВАЯ КАРТОЧКА */
+        .container {
+            background-color: rgba(0, 0, 0, 0.85); /* Полупрозрачный черный, чтобы фон слегка просвечивал */
+            padding: 40px;
+            border: 1px solid #222;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(5px); /* Эффект размытия под карточкой */
+        }
+
+        h1 {
+            font-size: 24px;
+            letter-spacing: 6px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-weight: 900;
+            text-shadow: 0 0 10px rgba(255,255,255,0.1);
+        }
+
+        .status {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: #666;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background-color: #111;
             margin-bottom: 25px;
             position: relative;
-            border: 1px solid #1a1a1a;
-        }
-        .timeline-progress {
-            height: 100%;
-            background-color: var(--text-main);
-            width: 0%;
-            transition: width 0.3s ease;
         }
 
-        /* Кнопки */
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #ffffff;
+            transition: width 0.1s linear;
+        }
+
         .controls {
             display: flex;
-            justify-content: center;
-            gap: 10px;
+            gap: 15px;
             margin-bottom: 25px;
         }
 
-        .btn-core {
-            background: none;
-            border: 1px solid var(--text-main);
-            color: var(--text-main);
-            padding: 14px 20px;
-            font-size: 11px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-weight: bold;
+        button {
             flex: 1;
-            text-align: center;
-        }
-
-        .btn-core:hover:not(:disabled) {
-            background-color: var(--text-main);
-            color: var(--bg-color);
-        }
-
-        .btn-core:disabled {
-            border-color: #222;
-            color: #222;
-            cursor: not-allowed;
             background: none;
+            border: 1px solid #333;
+            color: #ffffff;
+            padding: 15px;
+            font-size: 11px;
+            letter-spacing: 3px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
         }
 
-        .btn-skip { border-color: #333; color: var(--text-muted); }
-        .btn-skip:hover:not(:disabled) { border-color: var(--text-main); color: var(--text-main); background: none; }
+        button:hover:not(:disabled) {
+            background-color: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+        }
 
-        /* Поле ввода и подсказки */
-        .search-box { position: relative; margin-bottom: 15px; }
+        button:disabled {
+            color: #333;
+            border-color: #111;
+            cursor: not-allowed;
+        }
+
+        .input-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
 
         input[type="text"] {
             width: 100%;
-            background: #0a0a0a;
-            border: 1px solid var(--border-color);
-            padding: 14px;
-            color: var(--text-main);
-            font-size: 13px;
-            font-family: inherit;
-            box-sizing: border-box;
+            background-color: #000000;
+            border: 1px solid #333;
+            color: #ffffff;
+            padding: 15px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            outline: none;
             text-align: center;
-            letter-spacing: 1px;
         }
-        input[type="text"]:focus { outline: none; border-color: #555; }
 
-        .suggestions {
+        input[type="text"]:focus {
+            border-color: #666;
+        }
+
+        .autocomplete-list {
             position: absolute;
             top: 100%;
             left: 0;
-            width: 100%;
-            background-color: #080808;
-            border: 1px solid var(--border-color);
-            max-height: 140px;
+            right: 0;
+            background-color: #000000;
+            border: 1px solid #333;
+            border-top: none;
+            max-height: 150px;
             overflow-y: auto;
             z-index: 10;
             display: none;
         }
 
-        .suggestion-item {
+        .autocomplete-item {
             padding: 12px;
-            font-size: 11px;
+            font-size: 10px;
+            letter-spacing: 1px;
             cursor: pointer;
-            border-bottom: 1px solid #111;
-            text-align: left;
-        }
-        .suggestion-item:hover { background-color: var(--text-main); color: var(--bg-color); }
-
-        .status-log {
             text-align: center;
+            border-bottom: 1px solid #111;
+        }
+
+        .autocomplete-item:hover {
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        .submit-btn {
+            width: 100%;
+            border-color: #333;
+        }
+
+        .message {
+            margin-top: 25px;
             font-size: 11px;
             letter-spacing: 1px;
-            min-height: 20px;
-            margin-top: 20px;
             text-transform: uppercase;
-            line-height: 1.4;
+            min-height: 15px;
+            line-height: 1.6;
         }
 
-        /* Кастомный финальный плеер */
+        .success { color: #ffffff; font-weight: bold; }
+        .error { color: #777777; }
+
         .final-player {
             margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px dashed #333;
             display: none;
-            width: 100%;
-        }
-        audio {
-            width: 100%;
-            filter: invert(1) hue-rotate(180deg); /* Делает стандартный плеер стильным черным */
-            outline: none;
         }
     </style>
 </head>
 <body>
 
-<div class="game-wrapper">
-    <header>
-        <h1>OPIUM HEARDLE</h1>
-        <div class="tags" id="gameMode">ЗАГРУЗКА БАЗЫ...</div>
-    </header>
+    <div class="game-wrapper">
+        <div class="container">
+            <h1 id="game-title">OPIUM HEARDLE</h1>
+            <div id="db-status" class="status">Загрузка базы...</div>
 
-    <div class="timeline">
-        <div class="timeline-progress" id="progressLine"></div>
+            <div class="progress-bar-container">
+                <div id="progress" class="progress-bar"></div>
+            </div>
+
+            <div class="controls">
+                <button id="play-btn" disabled>LISTEN</button>
+                <button id="skip-btn" disabled>SKIP</button>
+            </div>
+
+            <div class="input-container">
+                <input type="text" id="track-input" placeholder="ENTER ARTIST OR TRACK..." disabled autocomplete="off">
+                <div id="autocomplete-box" class="autocomplete-list"></div>
+            </div>
+
+            <button id="submit-btn" class="submit-btn" disabled>SUBMIT</button>
+
+            <div id="message" class="message"></div>
+            <div id="final-player" class="final-player"></div>
+        </div>
     </div>
 
-    <div class="controls">
-        <button class="btn-core" id="playBtn" disabled>LISTEN</button>
-        <button class="btn-core" id="pauseBtn" disabled style="display: none;">PAUSE</button>
-        <button class="btn-core btn-skip" id="skipBtn" disabled>SKIP</button>
-    </div>
-
-    <div class="search-box">
-        <input type="text" id="guessInput" placeholder="ENTER ARTIST OR TRACK..." disabled autocomplete="off">
-        <div class="suggestions" id="suggestionsBox"></div>
-    </div>
-    
-    <button class="btn-core" style="width: 100%;" id="submitBtn" disabled>SUBMIT</button>
-
-    <div class="status-log" id="statusLog"></div>
-
-    <!-- Нативный плеер, вылезает в самом конце -->
-    <div class="final-player" id="finalPlayerBox">
-        <audio id="nativeAudio" controls></audio>
-    </div>
-</div>
-
-<script src="tracks.js"></script>
-<script>
-    const timeSteps = [0.5, 1.5, 3.0, 5.0, 10.0];
-    let currentStep = 0;
-    let isPlaying = false;
-    let playTimeout;
-    let activeTrack;
-    let audio;
-
-    const playBtn = document.getElementById('playBtn');
-    const pauseBtn = document.getElementById('pauseBtn');
-    const skipBtn = document.getElementById('skipBtn');
-    const submitBtn = document.getElementById('submitBtn');
-    const guessInput = document.getElementById('guessInput');
-    const suggestionsBox = document.getElementById('suggestionsBox');
-    const statusLog = document.getElementById('statusLog');
-    const progressLine = document.getElementById('progressLine');
-    const gameMode = document.getElementById('gameMode');
-    const finalPlayerBox = document.getElementById('finalPlayerBox');
-    const nativeAudio = document.getElementById('nativeAudio');
-
-    function initGame() {
-        if (typeof tracksDatabase === 'undefined' || tracksDatabase.length === 0) {
-            statusLog.textContent = "Ошибка: Файл tracks.js не найден!";
-            return;
-        }
-
-        activeTrack = tracksDatabase[Math.floor(Math.random() * tracksDatabase.length)];
-        audio = new Audio(activeTrack.url);
-        nativeAudio.src = activeTrack.url; // Дублируем трек в финальный плеер
-
-        audio.addEventListener('canplaythrough', () => {
-            gameMode.textContent = "KAI ANGEL / 9MICE / CHE / OSAMASON";
-            statusLog.textContent = "🔊 НАЖМИ LISTEN, ЧТОБЫ УСЛЫШАТЬ БИТ";
-            updateUI();
-            enableControls(true);
-        }, { once: true });
-
-        setTimeout(() => {
-            if (playBtn.disabled && statusLog.textContent !== "Ошибка...") {
-                enableControls(true);
-                statusLog.textContent = "🔊 ГОТОВО К ТЕСТУ";
+    <script src="tracks.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const statusEl = document.getElementById('db-status');
+            if (typeof tracksDatabase === 'undefined') {
+                statusEl.textContent = "ОШИБКА: ФАЙЛ TRACKS.JS НЕ НАЙДЕН!";
+                statusEl.style.color = "#ff0000";
+                return;
             }
-        }, 1500);
-    }
-
-    function enableControls(status) {
-        playBtn.disabled = !status;
-        skipBtn.disabled = !status;
-        submitBtn.disabled = !status;
-        guessInput.disabled = !status;
-    }
-
-    function updateUI() {
-        const percent = (timeSteps[currentStep] / timeSteps[timeSteps.length - 1]) * 100;
-        progressLine.style.width = `${percent}%`;
-        statusLog.innerHTML = `ПОПЫТКА ${currentStep + 1} ИЗ ${timeSteps.length}<br>ДОСТУПНО: ${timeSteps[currentStep]} СЕК.`;
-    }
-
-    // Кнопка LISTEN
-    playBtn.addEventListener('click', () => {
-        if (isPlaying) return;
-        isPlaying = true;
-        
-        // Меняем кнопку LISTEN на PAUSE
-        playBtn.style.display = 'none';
-        pauseBtn.style.display = 'block';
-        pauseBtn.disabled = false;
-        pauseBtn.textContent = "PAUSE";
-        
-        audio.currentTime = activeTrack.startFrom;
-        audio.play().catch(() => {
-            statusLog.textContent = "Кликни по экрану!";
-            resetPlayButtons();
+            statusEl.textContent = "UNDERGROUND EDITION";
+            initGame();
         });
 
-        // Отсечка времени строго по шагу
-        playTimeout = setTimeout(() => {
-            audio.pause();
-            resetPlayButtons();
-        }, timeSteps[currentStep] * 1000);
-    });
+        function initGame() {
+            const todayTrack = tracksDatabase[Math.floor(Math.random() * tracksDatabase.length)];
+            let currentSeconds = 1;
+            const maxSeconds = 16;
+            const steps = [1, 2, 4, 7, 11, 16];
+            let currentStepIndex = 0;
+            let attempts = 0;
 
-    // Кнопка PAUSE (пока идет отрывок)
-    pauseBtn.addEventListener('click', () => {
-        if (!isPlaying) return;
-        clearTimeout(playTimeout);
-        audio.pause();
-        resetPlayButtons();
-    });
+            const audio = new Audio();
+            audio.src = todayTrack.url;
 
-    function resetPlayButtons() {
-        isPlaying = false;
-        pauseBtn.style.display = 'none';
-        playBtn.style.display = 'block';
-        playBtn.textContent = "LISTEN";
-    }
+            const playBtn = document.getElementById('play-btn');
+            const skipBtn = document.getElementById('skip-btn');
+            const submitBtn = document.getElementById('submit-btn');
+            const trackInput = document.getElementById('track-input');
+            const autocompleteBox = document.getElementById('autocomplete-box');
+            const progressBar = document.getElementById('progress');
+            const messageEl = document.getElementById('message');
+            const finalPlayerEl = document.getElementById('final-player');
 
-    // SKIP
-    skipBtn.addEventListener('click', () => {
-        if (isPlaying) { audio.pause(); clearTimeout(playTimeout); resetPlayButtons(); }
-        handleWrongAnswer("ПРОПУЩЕНО");
-    });
+            playBtn.disabled = false;
+            skipBtn.disabled = false;
+            submitBtn.disabled = false;
+            trackInput.disabled = false;
 
-    // SUBMIT
-    submitBtn.addEventListener('click', () => {
-        if (isPlaying) { audio.pause(); clearTimeout(playTimeout); resetPlayButtons(); }
-        const val = guessInput.value.trim().toLowerCase();
-        if (!val) return;
+            currentSeconds = steps[currentStepIndex];
+            updateSkipButtonText();
 
-        const isCorrect = activeTrack.answers.some(ans => val.includes(ans) || ans.includes(val));
+            playBtn.addEventListener('click', () => {
+                if (audio.paused) {
+                    audio.currentTime = todayTrack.startFrom || 0;
+                    audio.play().catch(e => console.log("Нужен клик"));
+                    playBtn.textContent = "PAUSE";
+                    progressBar.style.width = '0%';
+                    
+                    let start = Date.now();
+                    let duration = currentSeconds * 1000;
+                    
+                    clearInterval(window.progressInterval);
+                    window.progressInterval = setInterval(() => {
+                        let elapsed = Date.now() - start;
+                        let progress = (elapsed / duration) * 100;
+                        if (progress >= 100) {
+                            progressBar.style.width = '100%';
+                            clearInterval(window.progressInterval);
+                        } else {
+                            progressBar.style.width = progress + '%';
+                        }
+                    }, 50);
 
-        if (isCorrect) {
-            statusLog.innerHTML = `<span style="color: #1db954;">🎉 ТРУ ОПИУМ! ТРЕК УГАДАН:<br>${activeTrack.artist.toUpperCase()} — ${activeTrack.title.toUpperCase()}</span>`;
-            endGame();
-        } else {
-            handleWrongAnswer("НЕВЕРНЫЙ ТРЕК");
-        }
-    });
-
-    function handleWrongAnswer(reason) {
-        currentStep++;
-        guessInput.value = "";
-        if (currentStep < timeSteps.length) {
-            updateUI();
-            statusLog.textContent = `❌ ${reason}. ВРЕМЯ УВЕЛИЧЕНО.`;
-        } else {
-            statusLog.innerHTML = `<span style="color: var(--accent-color);">💥 ПОПЫТКИ КОНЧИЛИСЬ!<br>ЭТО БЫЛ: ${activeTrack.artist.toUpperCase()} — ${activeTrack.title.toUpperCase()}</span>`;
-            endGame();
-        }
-    }
-
-    // ФИНАЛ: Врубаем фулл и открываем плеер
-    function endGame() {
-        clearTimeout(playTimeout);
-        audio.pause(); // Глушим игровой плеер отрывков
-        
-        // Отключаем и прячем игровые кнопки
-        enableControls(false);
-        playBtn.style.display = 'none';
-        pauseBtn.style.display = 'none';
-        skipBtn.style.display = 'none';
-        
-        progressLine.style.width = "100%";
-
-        // Показываем нативный плеер, ставим на 0-ю секунду (старт трека) и запускаем на полную
-        finalPlayerBox.style.display = 'block';
-        nativeAudio.currentTime = 0; 
-        nativeAudio.play();
-        
-        gameMode.textContent = "NOW PLAYING FULL TRACK";
-    }
-
-    // Автодополнение
-    guessInput.addEventListener('input', () => {
-        const val = guessInput.value.toLowerCase();
-        suggestionsBox.innerHTML = '';
-        if (!val) { suggestionsBox.style.display = 'none'; return; }
-
-        const filtered = allAutocompleteOptions.filter(item => item.toLowerCase().includes(val));
-        if (filtered.length > 0) {
-            filtered.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'suggestion-item';
-                div.textContent = item;
-                div.addEventListener('click', () => {
-                    guessInput.value = item;
-                    suggestionsBox.style.display = 'none';
-                });
-                suggestionsBox.appendChild(div);
+                    window.audioTimeout = setTimeout(() => {
+                        audio.pause();
+                        playBtn.textContent = "LISTEN";
+                        progressBar.style.width = '0%';
+                        clearInterval(window.progressInterval);
+                    }, currentSeconds * 1000);
+                } else {
+                    stopAudio();
+                }
             });
-            suggestionsBox.style.display = 'block';
-        } else {
-            suggestionsBox.style.display = 'none';
+
+            function stopAudio() {
+                audio.pause();
+                clearTimeout(window.audioTimeout);
+                clearInterval(window.progressInterval);
+                playBtn.textContent = "LISTEN";
+                progressBar.style.width = '0%';
+            }
+
+            skipBtn.addEventListener('click', () => {
+                stopAudio();
+                goToNextStep();
+            });
+
+            function goToNextStep() {
+                attempts++;
+                currentStepIndex++;
+                if (currentStepIndex >= steps.length) {
+                    endGame(false);
+                } else {
+                    currentSeconds = steps[currentStepIndex];
+                    updateSkipButtonText();
+                    messageEl.textContent = `ПРОПУЩЕНО. ШАГ ${currentStepIndex + 1}/6 (${currentSeconds} СЕК)`;
+                    messageEl.className = "message error";
+                }
+            }
+
+            function updateSkipButtonText() {
+                if (currentStepIndex < steps.length - 1) {
+                    skipBtn.textContent = `SKIP TO ${steps[currentStepIndex + 1]}s`;
+                } else {
+                    skipBtn.textContent = "SKIP TO END";
+                }
+            }
+
+            submitBtn.addEventListener('click', () => {
+                stopAudio();
+                const guess = trackInput.value.trim().toLowerCase();
+                if (!guess) return;
+
+                const isCorrect = todayTrack.answers.some(ans => guess.includes(ans) || ans.includes(guess));
+
+                if (isCorrect) {
+                    endGame(true);
+                } else {
+                    trackInput.value = "";
+                    messageEl.textContent = "НЕПРАВИЛЬНО. ПОПРОБУЙ ЕЩЕ РАЗ ИЛИ СКИПНИ";
+                    messageEl.className = "message error";
+                    goToNextStep();
+                }
+            });
+
+            function endGame(win) {
+                stopAudio();
+                playBtn.disabled = true;
+                skipBtn.disabled = true;
+                submitBtn.disabled = true;
+                trackInput.disabled = true;
+                autocompleteBox.style.display = 'none';
+
+                if (win) {
+                    messageEl.textContent = `ЗАЕБАТО! ТЫ УГАДАЛ: ${todayTrack.artist} — ${todayTrack.title}`;
+                    messageEl.className = "message success";
+                } else {
+                    messageEl.textContent = `ИГРА ОКОНЧЕНА. ЭТО БЫЛ ТРЕК: ${todayTrack.artist} — ${todayTrack.title}`;
+                    messageEl.className = "message error";
+                }
+
+                if (todayTrack.embedCode) {
+                    finalPlayerEl.innerHTML = todayTrack.embedCode;
+                    finalPlayerEl.style.display = "block";
+                }
+            }
+
+            trackInput.addEventListener('input', () => {
+                const val = trackInput.value.trim().toLowerCase();
+                autocompleteBox.innerHTML = '';
+                if (!val) {
+                    autocompleteBox.style.display = 'none';
+                    return;
+                }
+
+                const filtered = allAutocompleteOptions.filter(opt => opt.toLowerCase().includes(val));
+                if (filtered.length === 0) {
+                    autocompleteBox.style.display = 'none';
+                    return;
+                }
+
+                filtered.forEach(opt => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+                    item.textContent = opt;
+                    item.addEventListener('click', () => {
+                        trackInput.value = opt;
+                        autocompleteBox.style.display = 'none';
+                    });
+                    autocompleteBox.appendChild(item);
+                });
+                autocompleteBox.style.display = 'block';
+            });
+
+            document.addEventListener('click', (e) => {
+                if (e.target !== trackInput) {
+                    autocompleteBox.style.display = 'none';
+                }
+            });
         }
-    });
-
-    document.addEventListener('click', (e) => {
-        if (e.target !== guessInput) suggestionsBox.style.display = 'none';
-    });
-
-    window.onload = initGame;
-</script>
+    </script>
 </body>
 </html>
