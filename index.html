@@ -1,1 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPIUM HEARDLE</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --card-bg: rgba(12, 12, 12, 0.95);
+            --border-color: #1c1c1c;
+            --accent-color: #e91429;
+            --text-main: #ffffff;
+            --text-muted: #666666;
+        }
 
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: radial-gradient(circle at 50% 50%, #111 0%, #050505 100%);
+        }
+
+        .game-wrapper {
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 90%;
+            max-width: 440px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.9);
+        }
+
+        header h1 {
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            margin: 0 0 5px 0;
+            text-align: center;
+        }
+
+        header .tags {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        /* Таймлайн */
+        .timeline {
+            height: 6px;
+            background-color: #111;
+            width: 100%;
+            margin-bottom: 25px;
+            position: relative;
+            border: 1px solid #1a1a1a;
+        }
+        .timeline-progress {
+            height: 100%;
+            background-color: var(--text-main);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Кнопки */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .btn-core {
+            background: none;
+            border: 1px solid var(--text-main);
+            color: var(--text-main);
+            padding: 14px 20px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+            flex: 1;
+            text-align: center;
+        }
+
+        .btn-core:hover:not(:disabled) {
+            background-color: var(--text-main);
+            color: var(--bg-color);
+        }
+
+        .btn-core:disabled {
+            border-color: #222;
+            color: #222;
+            cursor: not-allowed;
+            background: none;
+        }
+
+        .btn-skip { border-color: #333; color: var(--text-muted); }
+        .btn-skip:hover:not(:disabled) { border-color: var(--text-main); color: var(--text-main); background: none; }
+
+        /* Поле ввода и подсказки */
+        .search-box { position: relative; margin-bottom: 15px; }
+
+        input[type="text"] {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid var(--border-color);
+            padding: 14px;
+            color: var(--text-main);
+            font-size: 13px;
+            font-family: inherit;
+            box-sizing: border-box;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        input[type="text"]:focus { outline: none; border-color: #555; }
+
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background-color: #080808;
+            border: 1px solid var(--border-color);
+            max-height: 140px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            border-bottom: 1px solid #111;
+            text-align: left;
+        }
+        .suggestion-item:hover { background-color: var(--text-main); color: var(--bg-color); }
+
+        .status-log {
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 1px;
+            min-height: 20px;
+            margin-top: 20px;
+            text-transform: uppercase;
+            line-height: 1.4;
+        }
+
+        /* Кастомный финальный плеер */
+        .final-player {
+            margin-top: 20px;
+            display: none;
+            width: 100%;
+        }
+        audio {
+            width: 100%;
+            filter: invert(1) hue-rotate(180deg); /* Делает стандартный плеер стильным черным */
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-wrapper">
+    <header>
+        <h1>OPIUM HEARDLE</h1>
+        <div class="tags" id="gameMode">ЗАГРУЗКА БАЗЫ...</div>
+    </header>
+
+    <div class="timeline">
+        <div class="timeline-progress" id="progressLine"></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-core" id="playBtn" disabled>LISTEN</button>
+        <button class="btn-core" id="pauseBtn" disabled style="display: none;">PAUSE</button>
+        <button class="btn-core btn-skip" id="skipBtn" disabled>SKIP</button>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="guessInput" placeholder="ENTER ARTIST OR TRACK..." disabled autocomplete="off">
+        <div class="suggestions" id="suggestionsBox"></div>
+    </div>
+    
+    <button class="btn-core" style="width: 100%;" id="submitBtn" disabled>SUBMIT</button>
+
+    <div class="status-log" id="statusLog"></div>
+
+    <!-- Нативный плеер, вылезает в самом конце -->
+    <div class="final-player" id="finalPlayerBox">
+        <audio id="nativeAudio" controls></audio>
+    </div>
+</div>
+
+<script src="tracks.js"></script>
+<script>
+    const timeSteps = [0.5, 1.5, 3.0, 5.0, 10.0];
+    let currentStep = 0;
+    let isPlaying = false;
+    let playTimeout;
+    let activeTrack;
+    let audio;
+
+    const playBtn = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const skipBtn = document.getElementById('skipBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const guessInput = document.getElementById('guessInput');
+    const suggestionsBox = document.getElementById('suggestionsBox');
+    const statusLog = document.getElementById('statusLog');
+    const progressLine = document.getElementById('progressLine');
+    const gameMode = document.getElementById('gameMode');
+    const finalPlayerBox = document.getElementById('finalPlayerBox');
+    const nativeAudio = document.getElementById('nativeAudio');
+
+    function initGame() {
+        if (typeof tracksDatabase === 'undefined' || tracksDatabase.length === 0) {
+            statusLog.textContent = "Ошибка: Файл tracks.js не найден!";
+            return;
+        }
+
+        activeTrack = tracksDatabase[Math.floor(Math.random() * tracksDatabase.length)];
+        audio = new Audio(activeTrack.url);
+        nativeAudio.src = activeTrack.url; // Дублируем трек в финальный плеер
+
+        audio.addEventListener('canplaythrough', () => {
+            gameMode.textContent = "KAI ANGEL / 9MICE / CHE / OSAMASON";
+            statusLog.textContent = "🔊 НАЖМИ LISTEN, ЧТОБЫ УСЛЫШАТЬ БИТ";
+            updateUI();
+            enableControls(true);
+        }, { once: true });
+
+        setTimeout(() => {
+            if (playBtn.disabled && statusLog.textContent !== "Ошибка...") {
+                enableControls(true);
+                statusLog.textContent = "🔊 ГОТОВО К ТЕСТУ";
+            }
+        }, 1500);
+    }
+
+    function enableControls(status) {
+        playBtn.disabled = !status;
+        skipBtn.disabled = !status;
+        submitBtn.disabled = !status;
+        guessInput.disabled = !status;
+    }
+
+    function updateUI() {
+        const percent = (timeSteps[currentStep] / timeSteps[timeSteps.length - 1]) * 100;
+        progressLine.style.width = `${percent}%`;
+        statusLog.innerHTML = `ПОПЫТКА ${currentStep + 1} ИЗ ${timeSteps.length}<br>ДОСТУПНО: ${timeSteps[currentStep]} СЕК.`;
+    }
+
+    // Кнопка LISTEN
+    playBtn.addEventListener('click', () => {
+        if (isPlaying) return;
+        isPlaying = true;
+        
+        // Меняем кнопку LISTEN на PAUSE
+        playBtn.style.display = 'none';
+        pauseBtn.style.display = 'block';
+        pauseBtn.disabled = false;
+        pauseBtn.textContent = "PAUSE";
+        
+        audio.currentTime = activeTrack.startFrom;
+        audio.play().catch(() => {
+            statusLog.textContent = "Кликни по экрану!";
+            resetPlayButtons();
+        });
+
+        // Отсечка времени строго по шагу
+        playTimeout = setTimeout(() => {
+            audio.pause();
+            resetPlayButtons();
+        }, timeSteps[currentStep] * 1000);
+    });
+
+    // Кнопка PAUSE (пока идет отрывок)
+    pauseBtn.addEventListener('click', () => {
+        if (!isPlaying) return;
+        clearTimeout(playTimeout);
+        audio.pause();
+        resetPlayButtons();
+    });
+
+    function resetPlayButtons() {
+        isPlaying = false;
+        pauseBtn.style.display = 'none';
+        playBtn.style.display = 'block';
+        playBtn.textContent = "LISTEN";
+    }
+
+    // SKIP
+    skipBtn.addEventListener('click', () => {
+        if (isPlaying) { audio.pause(); clearTimeout(playTimeout); resetPlayButtons(); }
+        handleWrongAnswer("ПРОПУЩЕНО");
+    });
+
+    // SUBMIT
+    submitBtn.addEventListener('click', () => {
+        if (isPlaying) { audio.pause(); clearTimeout(playTimeout); resetPlayButtons(); }
+        const val = guessInput.value.trim().toLowerCase();
+        if (!val) return;
+
+        const isCorrect = activeTrack.answers.some(ans => val.includes(ans) || ans.includes(val));
+
+        if (isCorrect) {
+            statusLog.innerHTML = `<span style="color: #1db954;">🎉 ТРУ ОПИУМ! ТРЕК УГАДАН:<br>${activeTrack.artist.toUpperCase()} — ${activeTrack.title.toUpperCase()}</span>`;
+            endGame();
+        } else {
+            handleWrongAnswer("НЕВЕРНЫЙ ТРЕК");
+        }
+    });
+
+    function handleWrongAnswer(reason) {
+        currentStep++;
+        guessInput.value = "";
+        if (currentStep < timeSteps.length) {
+            updateUI();
+            statusLog.textContent = `❌ ${reason}. ВРЕМЯ УВЕЛИЧЕНО.`;
+        } else {
+            statusLog.innerHTML = `<span style="color: var(--accent-color);">💥 ПОПЫТКИ КОНЧИЛИСЬ!<br>ЭТО БЫЛ: ${activeTrack.artist.toUpperCase()} — ${activeTrack.title.toUpperCase()}</span>`;
+            endGame();
+        }
+    }
+
+    // ФИНАЛ: Врубаем фулл и открываем плеер
+    function endGame() {
+        clearTimeout(playTimeout);
+        audio.pause(); // Глушим игровой плеер отрывков
+        
+        // Отключаем и прячем игровые кнопки
+        enableControls(false);
+        playBtn.style.display = 'none';
+        pauseBtn.style.display = 'none';
+        skipBtn.style.display = 'none';
+        
+        progressLine.style.width = "100%";
+
+        // Показываем нативный плеер, ставим на 0-ю секунду (старт трека) и запускаем на полную
+        finalPlayerBox.style.display = 'block';
+        nativeAudio.currentTime = 0; 
+        nativeAudio.play();
+        
+        gameMode.textContent = "NOW PLAYING FULL TRACK";
+    }
+
+    // Автодополнение
+    guessInput.addEventListener('input', () => {
+        const val = guessInput.value.toLowerCase();
+        suggestionsBox.innerHTML = '';
+        if (!val) { suggestionsBox.style.display = 'none'; return; }
+
+        const filtered = allAutocompleteOptions.filter(item => item.toLowerCase().includes(val));
+        if (filtered.length > 0) {
+            filtered.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = item;
+                div.addEventListener('click', () => {
+                    guessInput.value = item;
+                    suggestionsBox.style.display = 'none';
+                });
+                suggestionsBox.appendChild(div);
+            });
+            suggestionsBox.style.display = 'block';
+        } else {
+            suggestionsBox.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (e.target !== guessInput) suggestionsBox.style.display = 'none';
+    });
+
+    window.onload = initGame;
+</script>
+</body>
+</html>
